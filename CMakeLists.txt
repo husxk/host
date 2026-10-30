@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(APP_NAME host)
 
-find_package(RapidJSON REQUIRED)
+find_path(RAPIDJSON_INCLUDE_DIR rapidjson/document.h REQUIRED)
 
 file(GLOB_RECURSE HOST_SOURCES
     ${PROJECT_SOURCE_DIR}/src/*.cpp
@@ -26,11 +26,7 @@ add_executable(${APP_NAME}
 target_include_directories(${APP_NAME}
     PRIVATE
         ${PROJECT_SOURCE_DIR}/include
-)
-
-target_link_libraries(${APP_NAME}
-    PRIVATE
-        RapidJSON
+        ${RAPIDJSON_INCLUDE_DIR}
 )
 
 target_compile_options(${APP_NAME}
