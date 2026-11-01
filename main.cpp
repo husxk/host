@@ -1,7 +1,7 @@
 #include <cstdio>
 
 #include "logger.h"
-#include "storage/directory.h"
+#include "storage/file_tree.h"
 
 int main()
 {
@@ -11,11 +11,11 @@ int main()
         return 1;
     }
 
-    Directory root("build/");
+    FileTree tree("build");
 
-    if (root.scan("build"))
+    if (tree.scan())
     {
-        root.print();
+        tree.print();
     }
 
     return 0;
