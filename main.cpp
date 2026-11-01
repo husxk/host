@@ -1,6 +1,7 @@
 #include <cstdio>
 
 #include "logger.h"
+#include "storage/directory.h"
 
 int main()
 {
@@ -10,9 +11,12 @@ int main()
         return 1;
     }
 
-    Logger::info("host started");
-    Logger::warn("this is a warning");
-    Logger::error("this is an error");
+    Directory root("build/");
+
+    if (root.scan("build"))
+    {
+        root.print();
+    }
 
     return 0;
 }

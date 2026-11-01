@@ -117,6 +117,20 @@ void Logger::log_v(Level level, const char *fmt, va_list args)
     std::fflush(this->log_file);
 }
 
+void Logger::plain_v(const char *fmt, va_list args)
+{
+    std::lock_guard<std::mutex> lock(this->write_mutex);
+
+    if (!this->initialized || this->log_file == nullptr)
+    {
+        return;
+    }
+
+    std::vfprintf(this->log_file, fmt, args);
+    std::fputc('\n', this->log_file);
+    std::fflush(this->log_file);
+}
+
 void Logger::log(Level level, const char *fmt, ...)
 {
     va_list args;
@@ -146,5 +160,13 @@ void Logger::error(const char *fmt, ...)
     va_list args;
     va_start(args, fmt);
     Logger::instance().log_v(Level::Error, fmt, args);
+    va_end(args);
+}
+
+void Logger::plain(const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    Logger::instance().plain_v(fmt, args);
     va_end(args);
 }

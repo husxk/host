@@ -29,6 +29,9 @@ public:
     static void error(const char *fmt, ...)
         __attribute__((format(printf, 1, 2)));
 
+    static void plain(const char *fmt, ...)
+        __attribute__((format(printf, 1, 2)));
+
 private:
     static Logger &instance();
 
@@ -41,6 +44,8 @@ private:
     const char *level_label(Level level) const;
 
     void log_v(Level level, const char *fmt, va_list args);
+
+    void plain_v(const char *fmt, va_list args);
 
     std::mutex write_mutex;
     FILE      *log_file    = nullptr;
