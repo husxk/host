@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "config.h"
 #include "logger.h"
 #include "storage/file_tree.h"
 
@@ -11,7 +12,14 @@ int main()
         return 1;
     }
 
-    FileTree tree("build");
+    Config config;
+
+    if (!config.load("./config.json"))
+    {
+        return 1;
+    }
+
+    FileTree tree(config.get_root_path());
 
     if (tree.scan())
     {
