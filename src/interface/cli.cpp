@@ -1,15 +1,52 @@
 #include "interface/cli.h"
 
+#include <cassert>
 #include <cstdarg>
 #include <sstream>
+#include <utility>
 
-Cli::Cli(FILE *in, FILE *out)
-    : in(in)
-    , out(out)
+#include "command/command.h"
+
+namespace
 {
+
+struct Entry
+{
+    const char *name;
+    const char *description;
+    Command     command;
+};
+
+constexpr Entry entries[] = {
+    {"scan", "rescan the file tree", ScanCommand {}},
+    {"print", "print the file tree", PrintCommand {}},
+    {"exit", "quit", ExitCommand {}},
+};
+
+const Entry *find_entry(const std::string &name)
+{
+    for (const Entry &entry : entries)
+    {
+        if (name == entry.name)
+        {
+            return &entry;
+        }
+    }
+
+    return nullptr;
 }
 
-bool Cli::read_command(Command &out)
+} // namespace
+
+Cli::Cli(std::shared_ptr<CommandDispatcher> dispatcher, FILE *in, FILE *out)
+    : dispatcher(std::move(dispatcher))
+    , in(in)
+    , out(out)
+{
+    assert(this->dispatcher);
+}
+
+void Cli::run()
 {
     std::string line;
     line.reserve(Cli::line_reserve);
@@ -22,13 +59,9 @@ bool Cli::read_command(Command &out)
         if (!this->read_line(line))
         {
             std::fputc('\n', this->out);
-            return false;
+            return;
         }
-
-        Cli::tokenize(line, out);
-    } while (out.name.empty());
-
-    return true;
+    } while (this->execute(line));
 }
 
 void Cli::print(const char *fmt, ...)
@@ -63,22 +96,61 @@ bool Cli::read_line(std::string &line)
     return !line.empty();
 }
 
-void Cli::tokenize(const std::string &line, Command &out)
+bool Cli::execute(const std::string &line)
 {
-    out.name.clear();
-    out.args.clear();
-
     std::istringstream stream(line);
+    std::string        name;
+    std::string        extra;
 
-    if (!(stream >> out.name))
+    if (!(stream >> name))
     {
-        return;
+        return true;
     }
 
-    std::string arg;
-
-    while (stream >> arg)
+    if (stream >> extra)
     {
-        out.args.push_back(arg);
+        this->print("%s: unexpected arguments", name.c_str());
+        return true;
     }
+
+    if (name == Cli::help_name)
+    {
+        this->print_help();
+        return true;
+    }
+
+    const Entry *entry = find_entry(name);
+
+    if (entry == nullptr)
+    {
+        this->print("unknown command: %s", name.c_str());
+        return true;
+    }
+
+    switch (this->dispatcher->dispatch(entry->command))
+    {
+    case CommandDispatcher::Result::Ok:
+        return true;
+
+    case CommandDispatcher::Result::Failed:
+        this->print("%s failed", name.c_str());
+        return true;
+
+    case CommandDispatcher::Result::Exit:
+        return false;
+    }
+
+    return true;
+}
+
+void Cli::print_help()
+{
+    this->print("commands:");
+
+    for (const Entry &entry : entries)
+    {
+        this->print("  %-6s %s", entry.name, entry.description);
+    }
+
+    this->print("  %-6s %s", Cli::help_name, "show this help");
 }

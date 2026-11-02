@@ -2,33 +2,34 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <memory>
 #include <string>
-#include <vector>
+
+#include "command/command_dispatcher.h"
 
 class Cli
 {
 public:
-    struct Command
-    {
-        std::string              name;
-        std::vector<std::string> args;
-    };
+    Cli() = delete;
+    explicit Cli(std::shared_ptr<CommandDispatcher> dispatcher,
+                 FILE                              *in  = stdin,
+                 FILE                              *out = stdout);
 
-    explicit Cli(FILE *in = stdin, FILE *out = stdout);
-
-    bool read_command(Command &out);
+    void run();
 
     void print(const char *fmt, ...)
         __attribute__((format(printf, 2, 3)));
 
 private:
     bool read_line(std::string &line);
+    bool execute(const std::string &line);
+    void print_help();
 
-    static void tokenize(const std::string &line, Command &out);
-
-    FILE *in;
-    FILE *out;
+    std::shared_ptr<CommandDispatcher> dispatcher;
+    FILE                              *in;
+    FILE                              *out;
 
     static constexpr const char  prompt[]     = "host> ";
+    static constexpr const char  help_name[]  = "help";
     static constexpr std::size_t line_reserve = 512;
 };
