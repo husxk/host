@@ -26,3 +26,15 @@ void FileTree::print() const
 
     this->root.print();
 }
+
+std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
+{
+    const Directory *dir = this->root.find(rel);
+
+    if (dir == nullptr)
+    {
+        return std::nullopt;
+    }
+
+    return dir->list();
+}

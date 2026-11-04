@@ -16,16 +16,28 @@ CommandDispatcher::Result CommandDispatcher::dispatch(const Command &cmd)
 
 CommandDispatcher::Result CommandDispatcher::handle(const ScanCommand &)
 {
-    return this->tree->scan() ? Result::Ok : Result::Failed;
+    return {this->tree->scan() ? Status::Ok : Status::Failed};
 }
 
 CommandDispatcher::Result CommandDispatcher::handle(const PrintCommand &)
 {
     this->tree->print();
-    return Result::Ok;
+    return {Status::Ok};
+}
+
+CommandDispatcher::Result CommandDispatcher::handle(const LsCommand &cmd)
+{
+    auto names = this->tree->list(cmd.path);
+
+    if (!names)
+    {
+        return {Status::Failed};
+    }
+
+    return {Status::Ok, std::move(*names)};
 }
 
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
-    return Result::Exit;
+    return {Status::Exit};
 }

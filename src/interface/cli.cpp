@@ -2,25 +2,52 @@
 
 #include <cassert>
 #include <cstdarg>
+#include <optional>
 #include <sstream>
 #include <utility>
+#include <vector>
 
 #include "command/command.h"
 
 namespace
 {
 
+using Args = std::vector<std::string>;
+
+template <typename T>
+std::optional<Command> make_no_args(const Args &args)
+{
+    if (!args.empty())
+    {
+        return std::nullopt;
+    }
+
+    return T {};
+}
+
+std::optional<Command> make_ls(const Args &args)
+{
+    if (args.size() > 1)
+    {
+        return std::nullopt;
+    }
+
+    return LsCommand {args.empty() ? "" : args[0]};
+}
+
 struct Entry
 {
     const char *name;
+    const char *usage;
     const char *description;
-    Command     command;
+    std::optional<Command> (*make)(const Args &args);
 };
 
 constexpr Entry entries[] = {
-    {"scan", "rescan the file tree", ScanCommand {}},
-    {"print", "print the file tree", PrintCommand {}},
-    {"exit", "quit", ExitCommand {}},
+    {"scan", "scan", "rescan the file tree", make_no_args<ScanCommand>},
+    {"print", "print", "print the file tree", make_no_args<PrintCommand>},
+    {"ls", "ls [dir]", "list directory contents", make_ls},
+    {"exit", "exit", "quit", make_no_args<ExitCommand>},
 };
 
 const Entry *find_entry(const std::string &name)
@@ -100,21 +127,27 @@ bool Cli::execute(const std::string &line)
 {
     std::istringstream stream(line);
     std::string        name;
-    std::string        extra;
+    std::string        arg;
+    Args               args;
 
     if (!(stream >> name))
     {
         return true;
     }
 
-    if (stream >> extra)
+    while (stream >> arg)
     {
-        this->print("%s: unexpected arguments", name.c_str());
-        return true;
+        args.push_back(arg);
     }
 
     if (name == Cli::help_name)
     {
+        if (!args.empty())
+        {
+            this->print("usage: %s", Cli::help_name);
+            return true;
+        }
+
         this->print_help();
         return true;
     }
@@ -127,16 +160,31 @@ bool Cli::execute(const std::string &line)
         return true;
     }
 
-    switch (this->dispatcher->dispatch(entry->command))
+    const std::optional<Command> command = entry->make(args);
+
+    if (!command)
     {
-    case CommandDispatcher::Result::Ok:
+        this->print("usage: %s", entry->usage);
+        return true;
+    }
+
+    const CommandDispatcher::Result result = this->dispatcher->dispatch(*command);
+
+    for (const std::string &result_line : result.lines)
+    {
+        this->print("%s", result_line.c_str());
+    }
+
+    switch (result.status)
+    {
+    case CommandDispatcher::Status::Ok:
         return true;
 
-    case CommandDispatcher::Result::Failed:
+    case CommandDispatcher::Status::Failed:
         this->print("%s failed", name.c_str());
         return true;
 
-    case CommandDispatcher::Result::Exit:
+    case CommandDispatcher::Status::Exit:
         return false;
     }
 
@@ -149,8 +197,8 @@ void Cli::print_help()
 
     for (const Entry &entry : entries)
     {
-        this->print("  %-6s %s", entry.name, entry.description);
+        this->print("  %-10s %s", entry.usage, entry.description);
     }
 
-    this->print("  %-6s %s", Cli::help_name, "show this help");
+    this->print("  %-10s %s", Cli::help_name, "show this help");
 }

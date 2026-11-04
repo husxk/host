@@ -1,5 +1,6 @@
 #include "storage/directory.h"
 
+#include <algorithm>
 #include <system_error>
 #include <utility>
 
@@ -76,6 +77,57 @@ void Directory::print(int depth) const
     {
         dir.print(depth + 1);
     }
+}
+
+std::vector<std::string> Directory::list() const
+{
+    std::vector<std::string> names;
+    names.reserve(this->files.size() + this->dirs.size());
+
+    for (const File &file : this->files)
+    {
+        names.push_back(file.get_name());
+    }
+
+    for (const Directory &dir : this->dirs)
+    {
+        names.push_back(dir.name + "/");
+    }
+
+    std::sort(names.begin(), names.end());
+
+    return names;
+}
+
+const Directory *Directory::find(const Path &rel) const
+{
+    const Directory *current = this;
+
+    for (const Path &part : rel)
+    {
+        if (part.empty() || part == "." || part == "/")
+        {
+            continue;
+        }
+
+        if (part == "..")
+        {
+            return nullptr;
+        }
+
+        const auto it = std::find_if(current->dirs.begin(),
+                                     current->dirs.end(),
+                                     [&part](const Directory &dir) { return dir.name == part; });
+
+        if (it == current->dirs.end())
+        {
+            return nullptr;
+        }
+
+        current = &*it;
+    }
+
+    return current;
 }
 
 const std::string &Directory::get_name() const
