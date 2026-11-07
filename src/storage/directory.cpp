@@ -130,6 +130,29 @@ const Directory *Directory::find(const Path &rel) const
     return current;
 }
 
+const File *Directory::find_file(const Path &rel) const
+{
+    const Directory *dir = this->find(rel.parent_path());
+
+    if (dir == nullptr)
+    {
+        return nullptr;
+    }
+
+    const std::string name = rel.filename().string();
+
+    const auto it = std::find_if(dir->files.begin(),
+                                 dir->files.end(),
+                                 [&name](const File &file) { return file.get_name() == name; });
+
+    if (it == dir->files.end())
+    {
+        return nullptr;
+    }
+
+    return &*it;
+}
+
 const std::string &Directory::get_name() const
 {
     return this->name;

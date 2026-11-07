@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "command/command.h"
@@ -13,14 +14,19 @@ public:
     enum class Status
     {
         Ok,
+        MoreData,
         Failed,
         Exit,
     };
 
+    using Strings = std::vector<std::string>;
+    using RawData = std::vector<char>;
+    using Body    = std::variant<std::monostate, Strings, RawData>;
+
     struct Result
     {
-        Status                   status;
-        std::vector<std::string> lines {};
+        Status status;
+        Body   body {};
     };
 
     CommandDispatcher() = delete;
@@ -32,6 +38,7 @@ private:
     Result handle(const ScanCommand &cmd);
     Result handle(const PrintCommand &cmd);
     Result handle(const LsCommand &cmd);
+    Result handle(const ShowCommand &cmd);
     Result handle(const ExitCommand &cmd);
 
     std::shared_ptr<FileTree> tree;

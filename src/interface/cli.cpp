@@ -5,6 +5,7 @@
 #include <optional>
 #include <sstream>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "command/command.h"
@@ -35,19 +36,70 @@ std::optional<Command> make_ls(const Args &args)
     return LsCommand {args.empty() ? "" : args[0]};
 }
 
+std::optional<Command> make_show(const Args &args)
+{
+    if (args.size() != 1)
+    {
+        return std::nullopt;
+    }
+
+    return ShowCommand {args[0]};
+}
+
+bool handle_none(Cli &, Command &, const CommandDispatcher::Result &)
+{
+    return true;
+}
+
+bool handle_strings(Cli &cli, Command &, const CommandDispatcher::Result &result)
+{
+    if (const auto *strings = std::get_if<CommandDispatcher::Strings>(&result.body))
+    {
+        for (const std::string &line : *strings)
+        {
+            cli.print("%s", line.c_str());
+        }
+    }
+
+    return true;
+}
+
+bool handle_show(Cli &cli, Command &command, const CommandDispatcher::Result &result)
+{
+    const auto *raw = std::get_if<CommandDispatcher::RawData>(&result.body);
+
+    if (raw == nullptr)
+    {
+        return true;
+    }
+
+    cli.print_raw(raw->data(), raw->size());
+
+    if (result.status == CommandDispatcher::Status::MoreData && !raw->empty())
+    {
+        std::get<ShowCommand>(command).offset += raw->size();
+        return false;
+    }
+
+    cli.print_raw("\n", 1);
+    return true;
+}
+
 struct Entry
 {
     const char *name;
     const char *usage;
     const char *description;
     std::optional<Command> (*make)(const Args &args);
+    bool (*handle_result)(Cli &cli, Command &command, const CommandDispatcher::Result &result);
 };
 
 constexpr Entry entries[] = {
-    {"scan", "scan", "rescan the file tree", make_no_args<ScanCommand>},
-    {"print", "print", "print the file tree", make_no_args<PrintCommand>},
-    {"ls", "ls [dir]", "list directory contents", make_ls},
-    {"exit", "exit", "quit", make_no_args<ExitCommand>},
+    {"scan", "scan", "rescan the file tree", make_no_args<ScanCommand>, handle_none},
+    {"print", "print", "print the file tree", make_no_args<PrintCommand>, handle_none},
+    {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings},
+    {"show", "show <file>", "print file contents", make_show, handle_show},
+    {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none},
 };
 
 const Entry *find_entry(const std::string &name)
@@ -101,6 +153,12 @@ void Cli::print(const char *fmt, ...)
     va_end(args);
 
     std::fputc('\n', this->out);
+    std::fflush(this->out);
+}
+
+void Cli::print_raw(const char *data, std::size_t n)
+{
+    std::fwrite(data, 1, n, this->out);
     std::fflush(this->out);
 }
 
@@ -160,7 +218,7 @@ bool Cli::execute(const std::string &line)
         return true;
     }
 
-    const std::optional<Command> command = entry->make(args);
+    std::optional<Command> command = entry->make(args);
 
     if (!command)
     {
@@ -168,12 +226,12 @@ bool Cli::execute(const std::string &line)
         return true;
     }
 
-    const CommandDispatcher::Result result = this->dispatcher->dispatch(*command);
+    CommandDispatcher::Result result;
 
-    for (const std::string &result_line : result.lines)
+    do
     {
-        this->print("%s", result_line.c_str());
-    }
+        result = this->dispatcher->dispatch(*command);
+    } while (!entry->handle_result(*this, *command, result));
 
     switch (result.status)
     {
@@ -186,6 +244,10 @@ bool Cli::execute(const std::string &line)
 
     case CommandDispatcher::Status::Exit:
         return false;
+
+    default:
+        this->print("%s: unexpected state", name.c_str());
+        return true;
     }
 
     return true;
@@ -197,8 +259,8 @@ void Cli::print_help()
 
     for (const Entry &entry : entries)
     {
-        this->print("  %-10s %s", entry.usage, entry.description);
+        this->print("  %-12s %s", entry.usage, entry.description);
     }
 
-    this->print("  %-10s %s", Cli::help_name, "show this help");
+    this->print("  %-12s %s", Cli::help_name, "show this help");
 }

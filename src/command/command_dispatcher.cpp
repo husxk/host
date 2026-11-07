@@ -37,6 +37,24 @@ CommandDispatcher::Result CommandDispatcher::handle(const LsCommand &cmd)
     return {Status::Ok, std::move(*names)};
 }
 
+CommandDispatcher::Result CommandDispatcher::handle(const ShowCommand &cmd)
+{
+    RawData data(FileTree::block_size);
+
+    const FileTree::ReadResult read = this->tree->read(cmd.path, cmd.offset, data.data(), data.size());
+
+    if (read.status == FileTree::ReadStatus::Error)
+    {
+        return {Status::Failed};
+    }
+
+    data.resize(read.n);
+
+    const Status status = read.status == FileTree::ReadStatus::MoreData ? Status::MoreData : Status::Ok;
+
+    return {status, std::move(data)};
+}
+
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
     return {Status::Exit};

@@ -20,6 +20,8 @@ public:
     void print(const char *fmt, ...)
         __attribute__((format(printf, 2, 3)));
 
+    void print_raw(const char *data, std::size_t n);
+
 private:
     bool read_line(std::string &line);
     bool execute(const std::string &line);
