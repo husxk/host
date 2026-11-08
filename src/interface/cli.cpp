@@ -46,6 +46,23 @@ std::optional<Command> make_show(const Args &args)
     return ShowCommand {args[0]};
 }
 
+std::optional<Command> make_write(const Args &args)
+{
+    if (args.size() != 2)
+    {
+        return std::nullopt;
+    }
+
+    std::vector<char> data(args[1].begin(), args[1].end());
+
+    if (!data.empty())
+    {
+        data.push_back('\n');
+    }
+
+    return WriteCommand {args[0], std::move(data)};
+}
+
 bool handle_none(Cli &, Command &, const CommandDispatcher::Result &)
 {
     return true;
@@ -92,14 +109,16 @@ struct Entry
     const char *description;
     std::optional<Command> (*make)(const Args &args);
     bool (*handle_result)(Cli &cli, Command &command, const CommandDispatcher::Result &result);
+    bool raw_rest;
 };
 
 constexpr Entry entries[] = {
-    {"scan", "scan", "rescan the file tree", make_no_args<ScanCommand>, handle_none},
-    {"print", "print", "print the file tree", make_no_args<PrintCommand>, handle_none},
-    {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings},
-    {"show", "show <file>", "print file contents", make_show, handle_show},
-    {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none},
+    {"scan", "scan", "rescan the file tree", make_no_args<ScanCommand>, handle_none, false},
+    {"print", "print", "print the file tree", make_no_args<PrintCommand>, handle_none, false},
+    {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings, false},
+    {"show", "show <file>", "print file contents", make_show, handle_show, false},
+    {"write", "write <file> [text]", "append text to file", make_write, handle_none, true},
+    {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 
 const Entry *find_entry(const std::string &name)
@@ -193,9 +212,28 @@ bool Cli::execute(const std::string &line)
         return true;
     }
 
-    while (stream >> arg)
+    const Entry *entry = find_entry(name);
+
+    if (entry != nullptr && entry->raw_rest)
     {
-        args.push_back(arg);
+        if (stream >> arg)
+        {
+            std::string rest;
+
+            // Skip the single separator after the path; the rest is raw data.
+            stream.get();
+            std::getline(stream, rest);
+
+            args.push_back(arg);
+            args.push_back(rest);
+        }
+    }
+    else
+    {
+        while (stream >> arg)
+        {
+            args.push_back(arg);
+        }
     }
 
     if (name == Cli::help_name)
@@ -209,8 +247,6 @@ bool Cli::execute(const std::string &line)
         this->print_help();
         return true;
     }
-
-    const Entry *entry = find_entry(name);
 
     if (entry == nullptr)
     {
@@ -259,8 +295,8 @@ void Cli::print_help()
 
     for (const Entry &entry : entries)
     {
-        this->print("  %-12s %s", entry.usage, entry.description);
+        this->print("  %-20s %s", entry.usage, entry.description);
     }
 
-    this->print("  %-12s %s", Cli::help_name, "show this help");
+    this->print("  %-20s %s", Cli::help_name, "show this help");
 }

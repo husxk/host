@@ -76,3 +76,47 @@ FileTree::ReadResult FileTree::read(const Path    &rel,
 
     return {eof ? ReadStatus::Ok : ReadStatus::MoreData, n};
 }
+
+FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::size_t n)
+{
+    const std::string name = rel.filename().string();
+
+    if (name.empty() || name == "." || name == "..")
+    {
+        return {WriteStatus::Error, 0};
+    }
+
+    Directory *parent = this->root.find(rel.parent_path());
+
+    if (parent == nullptr || parent->find(name) != nullptr)
+    {
+        return {WriteStatus::Error, 0};
+    }
+
+    const bool exists = parent->find_file(name) != nullptr;
+
+    const Path    path = this->root_path / rel.relative_path();
+    std::ofstream out(path, std::ios::binary | std::ios::app);
+
+    if (!out)
+    {
+        Logger::error("file_tree: open %s failed", path.c_str());
+        return {WriteStatus::Error, 0};
+    }
+
+    out.write(data, static_cast<std::streamsize>(n));
+    out.flush();
+
+    if (!out)
+    {
+        Logger::error("file_tree: write %s failed", path.c_str());
+        return {WriteStatus::Error, 0};
+    }
+
+    if (!exists)
+    {
+        parent->add_file(name);
+    }
+
+    return {WriteStatus::Ok, n};
+}

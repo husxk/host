@@ -39,6 +39,7 @@ private:
     Result handle(const PrintCommand &cmd);
     Result handle(const LsCommand &cmd);
     Result handle(const ShowCommand &cmd);
+    Result handle(const WriteCommand &cmd);
     Result handle(const ExitCommand &cmd);
 
     std::shared_ptr<FileTree> tree;

@@ -55,6 +55,13 @@ CommandDispatcher::Result CommandDispatcher::handle(const ShowCommand &cmd)
     return {status, std::move(data)};
 }
 
+CommandDispatcher::Result CommandDispatcher::handle(const WriteCommand &cmd)
+{
+    const FileTree::WriteResult write = this->tree->write(cmd.path, cmd.data.data(), cmd.data.size());
+
+    return {write.status == FileTree::WriteStatus::Ok ? Status::Ok : Status::Failed};
+}
+
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
     return {Status::Exit};

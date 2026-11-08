@@ -18,7 +18,10 @@ public:
     std::vector<std::string> list() const;
 
     const Directory *find(const Path &rel) const;
+    Directory       *find(const Path &rel);
     const File      *find_file(const Path &rel) const;
+
+    void add_file(const std::string &name);
 
     const std::string &get_name() const;
 

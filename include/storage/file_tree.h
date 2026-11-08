@@ -27,6 +27,18 @@ public:
         std::size_t n;
     };
 
+    enum class WriteStatus
+    {
+        Ok,
+        Error,
+    };
+
+    struct WriteResult
+    {
+        WriteStatus status;
+        std::size_t n;
+    };
+
     static constexpr std::size_t block_size = 4096;
 
     explicit FileTree(const Path &root_path);
@@ -37,6 +49,8 @@ public:
 
     // TODO: cache open fds instead of reopening the file on every read.
     ReadResult read(const Path &rel, std::uint64_t offset, char *buf, std::size_t max);
+
+    WriteResult write(const Path &rel, const char *data, std::size_t n);
 
 private:
     Path      root_path;

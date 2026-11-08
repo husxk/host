@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <variant>
+#include <vector>
 
 struct ScanCommand
 {
@@ -23,8 +24,14 @@ struct ShowCommand
     std::uint64_t offset = 0;
 };
 
+struct WriteCommand
+{
+    std::string       path;
+    std::vector<char> data;
+};
+
 struct ExitCommand
 {
 };
 
-using Command = std::variant<ScanCommand, PrintCommand, LsCommand, ShowCommand, ExitCommand>;
+using Command = std::variant<ScanCommand, PrintCommand, LsCommand, ShowCommand, WriteCommand, ExitCommand>;

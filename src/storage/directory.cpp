@@ -130,6 +130,19 @@ const Directory *Directory::find(const Path &rel) const
     return current;
 }
 
+Directory *Directory::find(const Path &rel)
+{
+    const Directory &self = *this;
+    const Directory *dir  = self.find(rel);
+
+    return const_cast<Directory *>(dir);
+}
+
+void Directory::add_file(const std::string &name)
+{
+    this->files.emplace_back(name);
+}
+
 const File *Directory::find_file(const Path &rel) const
 {
     const Directory *dir = this->find(rel.parent_path());
