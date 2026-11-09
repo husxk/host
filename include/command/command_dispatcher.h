@@ -35,7 +35,6 @@ public:
     Result dispatch(const Command &cmd);
 
 private:
-    Result handle(const ScanCommand &cmd);
     Result handle(const PrintCommand &cmd);
     Result handle(const LsCommand &cmd);
     Result handle(const ShowCommand &cmd);

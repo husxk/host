@@ -113,7 +113,6 @@ struct Entry
 };
 
 constexpr Entry entries[] = {
-    {"scan", "scan", "rescan the file tree", make_no_args<ScanCommand>, handle_none, false},
     {"print", "print", "print the file tree", make_no_args<PrintCommand>, handle_strings, false},
     {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings, false},
     {"show", "show <file>", "print file contents", make_show, handle_show, false},

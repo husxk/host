@@ -14,11 +14,6 @@ CommandDispatcher::Result CommandDispatcher::dispatch(const Command &cmd)
     return std::visit([this](const auto &c) { return this->handle(c); }, cmd);
 }
 
-CommandDispatcher::Result CommandDispatcher::handle(const ScanCommand &)
-{
-    return {this->tree->scan() ? Status::Ok : Status::Failed};
-}
-
 CommandDispatcher::Result CommandDispatcher::handle(const PrintCommand &)
 {
     auto lines = this->tree->print();

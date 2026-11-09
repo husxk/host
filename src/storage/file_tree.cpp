@@ -12,11 +12,6 @@ FileTree::FileTree(const Path &root_path)
 {
 }
 
-bool FileTree::scan()
-{
-    return this->root.scan(this->root_path);
-}
-
 std::optional<std::vector<std::string>> FileTree::print() const
 {
     std::vector<std::string> lines {"/"};

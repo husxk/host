@@ -43,7 +43,6 @@ public:
 
     explicit FileTree(const Path &root_path);
 
-    bool scan();
     std::optional<std::vector<std::string>> print() const;
     std::optional<std::vector<std::string>> list(const Path &rel) const;
 

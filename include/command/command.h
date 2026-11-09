@@ -5,10 +5,6 @@
 #include <variant>
 #include <vector>
 
-struct ScanCommand
-{
-};
-
 struct PrintCommand
 {
 };
@@ -34,4 +30,4 @@ struct ExitCommand
 {
 };
 
-using Command = std::variant<ScanCommand, PrintCommand, LsCommand, ShowCommand, WriteCommand, ExitCommand>;
+using Command = std::variant<PrintCommand, LsCommand, ShowCommand, WriteCommand, ExitCommand>;
