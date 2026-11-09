@@ -17,16 +17,40 @@ bool FileTree::scan()
     return this->root.scan(this->root_path);
 }
 
-void FileTree::print() const
+std::optional<std::vector<std::string>> FileTree::print() const
 {
-    std::error_code ec;
-    const Path      abs_path = std::filesystem::absolute(this->root_path, ec);
+    std::vector<std::string> lines {"/"};
 
-    // Debug log
-    // TODO: remove it later.
-    Logger::plain("[debug] %s", ec ? this->root_path.c_str() : abs_path.c_str());
+    if (!this->walk(Path {}, 1, lines))
+    {
+        return std::nullopt;
+    }
 
-    this->root.print();
+    return lines;
+}
+
+bool FileTree::walk(const Path &rel, int depth, std::vector<std::string> &lines) const
+{
+    const std::optional<std::vector<Entry>> found = this->entries(rel);
+
+    if (!found)
+    {
+        return false;
+    }
+
+    const std::string indent(static_cast<std::size_t>(depth) * 2, ' ');
+
+    for (const Entry &entry : *found)
+    {
+        lines.push_back(indent + (entry.is_dir ? entry.name + "/" : entry.name));
+
+        if (entry.is_dir && !entry.is_symlink)
+        {
+            this->walk(rel / entry.name, depth + 1, lines);
+        }
+    }
+
+    return true;
 }
 
 std::optional<FileTree::Path> FileTree::resolve(const Path &rel) const
@@ -70,7 +94,7 @@ std::optional<FileTree::Path> FileTree::resolve(const Path &rel) const
     return path;
 }
 
-std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
+std::optional<std::vector<FileTree::Entry>> FileTree::entries(const Path &rel) const
 {
     const std::optional<Path> path = this->resolve(rel);
 
@@ -88,13 +112,14 @@ std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
         return std::nullopt;
     }
 
-    std::vector<std::string> names;
+    std::vector<Entry> result;
 
     for (; it != end; it.increment(ec))
     {
-        const std::string name = it->path().filename().string();
+        const std::string name       = it->path().filename().string();
+        const bool        is_symlink = it->is_symlink(ec);
 
-        if (it->is_symlink(ec) && !this->resolve(rel / name))
+        if (is_symlink && !this->resolve(rel / name))
         {
             continue;
         }
@@ -108,11 +133,11 @@ std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
 
         if (std::filesystem::is_directory(status))
         {
-            names.push_back(name + "/");
+            result.push_back({name, true, is_symlink});
         }
         else if (std::filesystem::is_regular_file(status))
         {
-            names.push_back(name);
+            result.push_back({name, false, is_symlink});
         }
     }
 
@@ -122,7 +147,27 @@ std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
         return std::nullopt;
     }
 
-    std::sort(names.begin(), names.end());
+    std::sort(result.begin(), result.end(), [](const Entry &a, const Entry &b) { return a.name < b.name; });
+
+    return result;
+}
+
+std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
+{
+    const std::optional<std::vector<Entry>> found = this->entries(rel);
+
+    if (!found)
+    {
+        return std::nullopt;
+    }
+
+    std::vector<std::string> names;
+    names.reserve(found->size());
+
+    for (const Entry &entry : *found)
+    {
+        names.push_back(entry.is_dir ? entry.name + "/" : entry.name);
+    }
 
     return names;
 }

@@ -21,8 +21,14 @@ CommandDispatcher::Result CommandDispatcher::handle(const ScanCommand &)
 
 CommandDispatcher::Result CommandDispatcher::handle(const PrintCommand &)
 {
-    this->tree->print();
-    return {Status::Ok};
+    auto lines = this->tree->print();
+
+    if (!lines)
+    {
+        return {Status::Failed};
+    }
+
+    return {Status::Ok, std::move(*lines)};
 }
 
 CommandDispatcher::Result CommandDispatcher::handle(const LsCommand &cmd)
