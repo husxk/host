@@ -72,14 +72,59 @@ std::optional<FileTree::Path> FileTree::resolve(const Path &rel) const
 
 std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
 {
-    const Directory *dir = this->root.find(rel);
+    const std::optional<Path> path = this->resolve(rel);
 
-    if (dir == nullptr)
+    if (!path)
     {
         return std::nullopt;
     }
 
-    return dir->list();
+    std::error_code                           ec;
+    std::filesystem::directory_iterator       it(*path, ec);
+    const std::filesystem::directory_iterator end;
+
+    if (ec)
+    {
+        return std::nullopt;
+    }
+
+    std::vector<std::string> names;
+
+    for (; it != end; it.increment(ec))
+    {
+        const std::string name = it->path().filename().string();
+
+        if (it->is_symlink(ec) && !this->resolve(rel / name))
+        {
+            continue;
+        }
+
+        const std::filesystem::file_status status = it->status(ec);
+
+        if (ec)
+        {
+            continue;
+        }
+
+        if (std::filesystem::is_directory(status))
+        {
+            names.push_back(name + "/");
+        }
+        else if (std::filesystem::is_regular_file(status))
+        {
+            names.push_back(name);
+        }
+    }
+
+    if (ec)
+    {
+        Logger::error("file_tree: list %s: %s", path->c_str(), ec.message().c_str());
+        return std::nullopt;
+    }
+
+    std::sort(names.begin(), names.end());
+
+    return names;
 }
 
 FileTree::ReadResult FileTree::read(const Path    &rel,
