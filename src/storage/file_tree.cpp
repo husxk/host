@@ -29,6 +29,47 @@ void FileTree::print() const
     this->root.print();
 }
 
+std::optional<FileTree::Path> FileTree::resolve(const Path &rel) const
+{
+    std::error_code ec;
+    const Path      root = std::filesystem::canonical(this->root_path, ec);
+
+    if (ec)
+    {
+        Logger::error("file_tree: resolve root %s: %s", this->root_path.c_str(), ec.message().c_str());
+        return std::nullopt;
+    }
+
+    const Path path = std::filesystem::weakly_canonical(root / rel.relative_path(), ec);
+
+    if (ec)
+    {
+        return std::nullopt;
+    }
+
+    const auto mismatch = std::mismatch(root.begin(), root.end(), path.begin(), path.end());
+
+    if (mismatch.first != root.end())
+    {
+        return std::nullopt;
+    }
+
+    // weakly_canonical leaves dangling symlinks unresolved; they could point outside the root.
+    Path prefix;
+
+    for (const Path &part : path)
+    {
+        prefix /= part;
+
+        if (std::filesystem::is_symlink(std::filesystem::symlink_status(prefix, ec)))
+        {
+            return std::nullopt;
+        }
+    }
+
+    return path;
+}
+
 std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
 {
     const Directory *dir = this->root.find(rel);
@@ -51,12 +92,18 @@ FileTree::ReadResult FileTree::read(const Path    &rel,
         return {ReadStatus::Error, 0};
     }
 
-    const Path    path = this->root_path / rel.relative_path();
-    std::ifstream in(path, std::ios::binary);
+    const std::optional<Path> path = this->resolve(rel);
+
+    if (!path)
+    {
+        return {ReadStatus::Error, 0};
+    }
+
+    std::ifstream in(*path, std::ios::binary);
 
     if (!in)
     {
-        Logger::error("file_tree: open %s failed", path.c_str());
+        Logger::error("file_tree: open %s failed", path->c_str());
         return {ReadStatus::Error, 0};
     }
 
@@ -67,7 +114,7 @@ FileTree::ReadResult FileTree::read(const Path    &rel,
 
     if (in.bad())
     {
-        Logger::error("file_tree: read %s failed", path.c_str());
+        Logger::error("file_tree: read %s failed", path->c_str());
         return {ReadStatus::Error, 0};
     }
 
@@ -95,12 +142,18 @@ FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::si
 
     const bool exists = parent->find_file(name) != nullptr;
 
-    const Path    path = this->root_path / rel.relative_path();
-    std::ofstream out(path, std::ios::binary | std::ios::app);
+    const std::optional<Path> path = this->resolve(rel);
+
+    if (!path)
+    {
+        return {WriteStatus::Error, 0};
+    }
+
+    std::ofstream out(*path, std::ios::binary | std::ios::app);
 
     if (!out)
     {
-        Logger::error("file_tree: open %s failed", path.c_str());
+        Logger::error("file_tree: open %s failed", path->c_str());
         return {WriteStatus::Error, 0};
     }
 
@@ -109,7 +162,7 @@ FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::si
 
     if (!out)
     {
-        Logger::error("file_tree: write %s failed", path.c_str());
+        Logger::error("file_tree: write %s failed", path->c_str());
         return {WriteStatus::Error, 0};
     }
 

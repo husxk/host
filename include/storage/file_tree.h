@@ -53,6 +53,10 @@ public:
     WriteResult write(const Path &rel, const char *data, std::size_t n);
 
 private:
+    // TODO: path can still be swapped between resolve() and open;
+    // Shouldnt we use openat2(RESOLVE_BENEATH) on Linux?
+    std::optional<Path> resolve(const Path &rel) const;
+
     Path      root_path;
     Directory root;
 };
