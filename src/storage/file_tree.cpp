@@ -132,14 +132,10 @@ FileTree::ReadResult FileTree::read(const Path    &rel,
                                     char          *buf,
                                     std::size_t    max)
 {
-    if (this->root.find_file(rel) == nullptr)
-    {
-        return {ReadStatus::Error, 0};
-    }
-
     const std::optional<Path> path = this->resolve(rel);
+    std::error_code           ec;
 
-    if (!path)
+    if (!path || !std::filesystem::is_regular_file(*path, ec))
     {
         return {ReadStatus::Error, 0};
     }
@@ -171,25 +167,18 @@ FileTree::ReadResult FileTree::read(const Path    &rel,
 
 FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::size_t n)
 {
-    const std::string name = rel.filename().string();
-
-    if (name.empty() || name == "." || name == "..")
-    {
-        return {WriteStatus::Error, 0};
-    }
-
-    Directory *parent = this->root.find(rel.parent_path());
-
-    if (parent == nullptr || parent->find(name) != nullptr)
-    {
-        return {WriteStatus::Error, 0};
-    }
-
-    const bool exists = parent->find_file(name) != nullptr;
-
     const std::optional<Path> path = this->resolve(rel);
 
     if (!path)
+    {
+        return {WriteStatus::Error, 0};
+    }
+
+    std::error_code                    ec;
+    const std::filesystem::file_status status = std::filesystem::status(*path, ec);
+
+    if (!std::filesystem::is_directory(path->parent_path(), ec)
+        || (std::filesystem::exists(status) && !std::filesystem::is_regular_file(status)))
     {
         return {WriteStatus::Error, 0};
     }
@@ -209,11 +198,6 @@ FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::si
     {
         Logger::error("file_tree: write %s failed", path->c_str());
         return {WriteStatus::Error, 0};
-    }
-
-    if (!exists)
-    {
-        parent->add_file(name);
     }
 
     return {WriteStatus::Ok, n};
