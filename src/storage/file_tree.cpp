@@ -1,7 +1,6 @@
 #include "storage/file_tree.h"
 
 #include <algorithm>
-#include <fstream>
 #include <system_error>
 
 #include "logger.h"
@@ -179,29 +178,14 @@ FileTree::ReadResult FileTree::read(const Path    &rel,
         return {ReadStatus::Error, 0};
     }
 
-    std::ifstream in(*path, std::ios::binary);
+    std::optional<File> file = File::open(*path, File::Mode::Read);
 
-    if (!in)
+    if (!file)
     {
-        Logger::error("file_tree: open %s failed", path->c_str());
         return {ReadStatus::Error, 0};
     }
 
-    const std::size_t count = std::min(max, FileTree::block_size);
-
-    in.seekg(static_cast<std::streamoff>(offset));
-    in.read(buf, static_cast<std::streamsize>(count));
-
-    if (in.bad())
-    {
-        Logger::error("file_tree: read %s failed", path->c_str());
-        return {ReadStatus::Error, 0};
-    }
-
-    const std::size_t n   = static_cast<std::size_t>(in.gcount());
-    const bool        eof = in.peek() == std::ifstream::traits_type::eof();
-
-    return {eof ? ReadStatus::Ok : ReadStatus::MoreData, n};
+    return file->read(offset, buf, std::min(max, FileTree::block_size));
 }
 
 FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::size_t n)
@@ -222,22 +206,12 @@ FileTree::WriteResult FileTree::write(const Path &rel, const char *data, std::si
         return {WriteStatus::Error, 0};
     }
 
-    std::ofstream out(*path, std::ios::binary | std::ios::app);
+    std::optional<File> file = File::open(*path, File::Mode::Append);
 
-    if (!out)
+    if (!file)
     {
-        Logger::error("file_tree: open %s failed", path->c_str());
         return {WriteStatus::Error, 0};
     }
 
-    out.write(data, static_cast<std::streamsize>(n));
-    out.flush();
-
-    if (!out)
-    {
-        Logger::error("file_tree: write %s failed", path->c_str());
-        return {WriteStatus::Error, 0};
-    }
-
-    return {WriteStatus::Ok, n};
+    return file->append(data, n);
 }

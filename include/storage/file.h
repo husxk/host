@@ -1,14 +1,55 @@
 #pragma once
 
-#include <string>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <optional>
 
 class File
 {
 public:
-    explicit File(const std::string &name);
+    using Path = std::filesystem::path;
 
-    const std::string &get_name() const;
+    enum class Mode
+    {
+        Read,
+        Append,
+    };
+
+    enum class ReadStatus
+    {
+        Ok,
+        MoreData,
+        Error,
+    };
+
+    struct ReadResult
+    {
+        ReadStatus  status;
+        std::size_t n;
+    };
+
+    enum class WriteStatus
+    {
+        Ok,
+        Error,
+    };
+
+    struct WriteResult
+    {
+        WriteStatus status;
+        std::size_t n;
+    };
+
+    static std::optional<File> open(const Path &path, Mode mode);
+
+    ReadResult  read(std::uint64_t offset, char *buf, std::size_t max);
+    WriteResult append(const char *data, std::size_t n);
 
 private:
-    std::string name;
+    File(Path path, std::fstream stream);
+
+    Path         path;
+    std::fstream stream;
 };

@@ -7,35 +7,17 @@
 #include <string>
 #include <vector>
 
+#include "storage/file.h"
+
 class FileTree
 {
 public:
     using Path = std::filesystem::path;
 
-    enum class ReadStatus
-    {
-        Ok,
-        MoreData,
-        Error,
-    };
-
-    struct ReadResult
-    {
-        ReadStatus  status;
-        std::size_t n;
-    };
-
-    enum class WriteStatus
-    {
-        Ok,
-        Error,
-    };
-
-    struct WriteResult
-    {
-        WriteStatus status;
-        std::size_t n;
-    };
+    using ReadStatus  = File::ReadStatus;
+    using ReadResult  = File::ReadResult;
+    using WriteStatus = File::WriteStatus;
+    using WriteResult = File::WriteResult;
 
     static constexpr std::size_t block_size = 4096;
 
