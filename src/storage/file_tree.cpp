@@ -8,7 +8,6 @@
 
 FileTree::FileTree(const Path &root_path)
     : root_path(root_path)
-    , root("")
 {
 }
 

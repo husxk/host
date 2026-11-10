@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "storage/directory.h"
-
 class FileTree
 {
 public:
@@ -67,6 +65,5 @@ private:
 
     bool walk(const Path &rel, int depth, std::vector<std::string> &lines) const;
 
-    Path      root_path;
-    Directory root;
+    Path root_path;
 };
