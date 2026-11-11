@@ -145,6 +145,54 @@ std::optional<std::vector<FileTree::Entry>> FileTree::entries(const Path &rel) c
     return result;
 }
 
+std::optional<FileInfo> FileTree::stat(const Path &rel) const
+{
+    const std::optional<Path> path = this->resolve(rel);
+
+    if (!path)
+    {
+        return std::nullopt;
+    }
+
+    std::error_code                    ec;
+    const std::filesystem::file_status status = std::filesystem::status(*path, ec);
+
+    FileInfo info {};
+
+    if (std::filesystem::is_regular_file(status))
+    {
+        info.type = FileInfo::Type::File;
+        info.size = std::filesystem::file_size(*path, ec);
+
+        if (ec)
+        {
+            Logger::error("file_tree: stat %s: %s", path->c_str(), ec.message().c_str());
+            return std::nullopt;
+        }
+    }
+    else if (std::filesystem::is_directory(status))
+    {
+        info.type = FileInfo::Type::Directory;
+        info.size = 0;
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
+    const std::filesystem::file_time_type mtime = std::filesystem::last_write_time(*path, ec);
+
+    if (ec)
+    {
+        Logger::error("file_tree: stat %s: %s", path->c_str(), ec.message().c_str());
+        return std::nullopt;
+    }
+
+    info.mtime = std::chrono::clock_cast<std::chrono::system_clock>(mtime);
+
+    return info;
+}
+
 std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
 {
     const std::optional<std::vector<Entry>> found = this->entries(rel);

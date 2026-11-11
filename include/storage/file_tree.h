@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
@@ -8,6 +9,19 @@
 #include <vector>
 
 #include "storage/file.h"
+
+struct FileInfo
+{
+    enum class Type
+    {
+        File,
+        Directory,
+    };
+
+    Type                                  type;
+    std::uint64_t                         size;
+    std::chrono::system_clock::time_point mtime;
+};
 
 class FileTree
 {
@@ -25,6 +39,7 @@ public:
 
     std::optional<std::vector<std::string>> print() const;
     std::optional<std::vector<std::string>> list(const Path &rel) const;
+    std::optional<FileInfo>                 stat(const Path &rel) const;
 
     // TODO: cache open fds instead of reopening the file on every read.
     ReadResult read(const Path &rel, std::uint64_t offset, char *buf, std::size_t max);

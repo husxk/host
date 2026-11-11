@@ -1,7 +1,9 @@
 #include "interface/cli.h"
 
 #include <cassert>
+#include <chrono>
 #include <cstdarg>
+#include <format>
 #include <optional>
 #include <sstream>
 #include <utility>
@@ -63,6 +65,16 @@ std::optional<Command> make_write(const Args &args)
     return WriteCommand {args[0], std::move(data)};
 }
 
+std::optional<Command> make_stat(const Args &args)
+{
+    if (args.size() != 1)
+    {
+        return std::nullopt;
+    }
+
+    return StatCommand {args[0]};
+}
+
 bool handle_none(Cli &, Command &, const CommandDispatcher::Result &)
 {
     return true;
@@ -102,6 +114,24 @@ bool handle_show(Cli &cli, Command &command, const CommandDispatcher::Result &re
     return true;
 }
 
+bool handle_stat(Cli &cli, Command &, const CommandDispatcher::Result &result)
+{
+    const auto *info = std::get_if<FileInfo>(&result.body);
+
+    if (info == nullptr)
+    {
+        return true;
+    }
+
+    const std::string mtime = std::format("{:%Y-%m-%d %H:%M:%S}", std::chrono::floor<std::chrono::seconds>(info->mtime));
+
+    cli.print("type:  %s", info->type == FileInfo::Type::File ? "file" : "dir");
+    cli.print("size:  %llu", static_cast<unsigned long long>(info->size));
+    cli.print("mtime: %s UTC", mtime.c_str());
+
+    return true;
+}
+
 struct Entry
 {
     const char *name;
@@ -117,6 +147,7 @@ constexpr Entry entries[] = {
     {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings, false},
     {"show", "show <file>", "print file contents", make_show, handle_show, false},
     {"write", "write <file> [text]", "append text to file", make_write, handle_none, true},
+    {"stat", "stat <path>", "show file info", make_stat, handle_stat, false},
     {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 

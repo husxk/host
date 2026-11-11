@@ -26,8 +26,13 @@ struct WriteCommand
     std::vector<char> data;
 };
 
+struct StatCommand
+{
+    std::string path;
+};
+
 struct ExitCommand
 {
 };
 
-using Command = std::variant<PrintCommand, LsCommand, ShowCommand, WriteCommand, ExitCommand>;
+using Command = std::variant<PrintCommand, LsCommand, ShowCommand, WriteCommand, StatCommand, ExitCommand>;

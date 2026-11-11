@@ -63,6 +63,18 @@ CommandDispatcher::Result CommandDispatcher::handle(const WriteCommand &cmd)
     return {write.status == FileTree::WriteStatus::Ok ? Status::Ok : Status::Failed};
 }
 
+CommandDispatcher::Result CommandDispatcher::handle(const StatCommand &cmd)
+{
+    const std::optional<FileInfo> info = this->tree->stat(cmd.path);
+
+    if (!info)
+    {
+        return {Status::Failed};
+    }
+
+    return {Status::Ok, *info};
+}
+
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
     return {Status::Exit};
