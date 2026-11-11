@@ -193,6 +193,27 @@ std::optional<FileInfo> FileTree::stat(const Path &rel) const
     return info;
 }
 
+bool FileTree::mkdir(const Path &rel)
+{
+    const std::optional<Path> path = this->resolve(rel);
+
+    if (!path)
+    {
+        return false;
+    }
+
+    std::error_code ec;
+    const bool      created = std::filesystem::create_directory(*path, ec);
+
+    if (ec)
+    {
+        Logger::error("file_tree: mkdir %s: %s", path->c_str(), ec.message().c_str());
+        return false;
+    }
+
+    return created;
+}
+
 std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
 {
     const std::optional<std::vector<Entry>> found = this->entries(rel);

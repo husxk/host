@@ -28,6 +28,17 @@ std::optional<Command> make_no_args(const Args &args)
     return T {};
 }
 
+template <typename T>
+std::optional<Command> make_one_arg(const Args &args)
+{
+    if (args.size() != 1)
+    {
+        return std::nullopt;
+    }
+
+    return T {args[0]};
+}
+
 std::optional<Command> make_ls(const Args &args)
 {
     if (args.size() > 1)
@@ -36,16 +47,6 @@ std::optional<Command> make_ls(const Args &args)
     }
 
     return LsCommand {args.empty() ? "" : args[0]};
-}
-
-std::optional<Command> make_show(const Args &args)
-{
-    if (args.size() != 1)
-    {
-        return std::nullopt;
-    }
-
-    return ShowCommand {args[0]};
 }
 
 std::optional<Command> make_write(const Args &args)
@@ -63,16 +64,6 @@ std::optional<Command> make_write(const Args &args)
     }
 
     return WriteCommand {args[0], std::move(data)};
-}
-
-std::optional<Command> make_stat(const Args &args)
-{
-    if (args.size() != 1)
-    {
-        return std::nullopt;
-    }
-
-    return StatCommand {args[0]};
 }
 
 bool handle_none(Cli &, Command &, const CommandDispatcher::Result &)
@@ -145,9 +136,10 @@ struct Entry
 constexpr Entry entries[] = {
     {"print", "print", "print the file tree", make_no_args<PrintCommand>, handle_strings, false},
     {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings, false},
-    {"show", "show <file>", "print file contents", make_show, handle_show, false},
+    {"show", "show <file>", "print file contents", make_one_arg<ShowCommand>, handle_show, false},
     {"write", "write <file> [text]", "append text to file", make_write, handle_none, true},
-    {"stat", "stat <path>", "show file info", make_stat, handle_stat, false},
+    {"stat", "stat <path>", "show file info", make_one_arg<StatCommand>, handle_stat, false},
+    {"mkdir", "mkdir <dir>", "create directory", make_one_arg<MkdirCommand>, handle_none, false},
     {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 

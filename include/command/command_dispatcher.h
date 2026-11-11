@@ -40,6 +40,7 @@ private:
     Result handle(const ShowCommand &cmd);
     Result handle(const WriteCommand &cmd);
     Result handle(const StatCommand &cmd);
+    Result handle(const MkdirCommand &cmd);
     Result handle(const ExitCommand &cmd);
 
     std::shared_ptr<FileTree> tree;

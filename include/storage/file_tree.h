@@ -41,6 +41,8 @@ public:
     std::optional<std::vector<std::string>> list(const Path &rel) const;
     std::optional<FileInfo>                 stat(const Path &rel) const;
 
+    bool mkdir(const Path &rel);
+
     // TODO: cache open fds instead of reopening the file on every read.
     ReadResult read(const Path &rel, std::uint64_t offset, char *buf, std::size_t max);
 
