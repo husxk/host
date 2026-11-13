@@ -320,20 +320,22 @@ bool Cli::execute(const std::string &line)
         result = this->dispatcher->dispatch(*command);
     } while (!entry->handle_result(*this, *command, result));
 
+    std::fputc('\n', this->out);
+
     switch (result.status)
     {
     case CommandDispatcher::Status::Ok:
         return true;
 
     case CommandDispatcher::Status::Failed:
-        this->print("%s failed", name.c_str());
+        this->print("%s failed\n", name.c_str());
         return true;
 
     case CommandDispatcher::Status::Exit:
         return false;
 
     default:
-        this->print("%s: unexpected state", name.c_str());
+        this->print("%s: unexpected state\n", name.c_str());
         return true;
     }
 
@@ -350,4 +352,6 @@ void Cli::print_help()
     }
 
     this->print("  %-20s %s", Cli::help_name, "show this help");
+
+    std::fputc('\n', this->out);
 }
