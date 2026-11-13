@@ -87,6 +87,32 @@ std::optional<FileTree::Path> FileTree::resolve(const Path &rel) const
     return path;
 }
 
+std::optional<FileTree::Path> FileTree::resolve_entry(const Path &rel) const
+{
+    Path entry = rel.relative_path();
+
+    if (!entry.has_filename())
+    {
+        entry = entry.parent_path();
+    }
+
+    const Path name = entry.filename();
+
+    if (name.empty() || name == "." || name == "..")
+    {
+        return std::nullopt;
+    }
+
+    const std::optional<Path> parent = this->resolve(entry.parent_path());
+
+    if (!parent)
+    {
+        return std::nullopt;
+    }
+
+    return *parent / name;
+}
+
 std::optional<std::vector<FileTree::Entry>> FileTree::entries(const Path &rel) const
 {
     const std::optional<Path> path = this->resolve(rel);
@@ -212,6 +238,44 @@ bool FileTree::mkdir(const Path &rel)
     }
 
     return created;
+}
+
+bool FileTree::mv(const Path &src, const Path &dst)
+{
+    const std::optional<Path> src_path = this->resolve_entry(src);
+    std::optional<Path>       dst_path = this->resolve(dst);
+
+    if (!src_path || !dst_path)
+    {
+        return false;
+    }
+
+    std::error_code ec;
+
+    if (!std::filesystem::exists(std::filesystem::symlink_status(*src_path, ec)))
+    {
+        return false;
+    }
+
+    if (std::filesystem::is_directory(*dst_path, ec))
+    {
+        *dst_path /= src_path->filename();
+    }
+
+    if (std::filesystem::exists(std::filesystem::symlink_status(*dst_path, ec)))
+    {
+        return false;
+    }
+
+    std::filesystem::rename(*src_path, *dst_path, ec);
+
+    if (ec)
+    {
+        Logger::error("file_tree: mv %s -> %s: %s", src_path->c_str(), dst_path->c_str(), ec.message().c_str());
+        return false;
+    }
+
+    return true;
 }
 
 std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const

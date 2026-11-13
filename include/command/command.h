@@ -36,9 +36,21 @@ struct MkdirCommand
     std::string path;
 };
 
+struct MvCommand
+{
+    std::string src;
+    std::string dst;
+};
+
 struct ExitCommand
 {
 };
 
-using Command =
-    std::variant<PrintCommand, LsCommand, ShowCommand, WriteCommand, StatCommand, MkdirCommand, ExitCommand>;
+using Command = std::variant<PrintCommand,
+                             LsCommand,
+                             ShowCommand,
+                             WriteCommand,
+                             StatCommand,
+                             MkdirCommand,
+                             MvCommand,
+                             ExitCommand>;

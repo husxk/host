@@ -66,6 +66,16 @@ std::optional<Command> make_write(const Args &args)
     return WriteCommand {args[0], std::move(data)};
 }
 
+std::optional<Command> make_mv(const Args &args)
+{
+    if (args.size() != 2)
+    {
+        return std::nullopt;
+    }
+
+    return MvCommand {args[0], args[1]};
+}
+
 bool handle_none(Cli &, Command &, const CommandDispatcher::Result &)
 {
     return true;
@@ -140,6 +150,7 @@ constexpr Entry entries[] = {
     {"write", "write <file> [text]", "append text to file", make_write, handle_none, true},
     {"stat", "stat <path>", "show file info", make_one_arg<StatCommand>, handle_stat, false},
     {"mkdir", "mkdir <dir>", "create directory", make_one_arg<MkdirCommand>, handle_none, false},
+    {"mv", "mv <src> <dst>", "move or rename", make_mv, handle_none, false},
     {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 

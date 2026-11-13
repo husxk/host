@@ -43,6 +43,9 @@ public:
 
     bool mkdir(const Path &rel);
 
+    // TODO: dst can appear between the exists check and rename; use renameat2(RENAME_NOREPLACE) on Linux?
+    bool mv(const Path &src, const Path &dst);
+
     // TODO: cache open fds instead of reopening the file on every read.
     ReadResult read(const Path &rel, std::uint64_t offset, char *buf, std::size_t max);
 
@@ -59,6 +62,7 @@ private:
     // TODO: path can still be swapped between resolve() and open;
     // Shouldnt we use openat2(RESOLVE_BENEATH) on Linux?
     std::optional<Path> resolve(const Path &rel) const;
+    std::optional<Path> resolve_entry(const Path &rel) const;
 
     std::optional<std::vector<Entry>> entries(const Path &rel) const;
 

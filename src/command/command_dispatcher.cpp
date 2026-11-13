@@ -80,6 +80,11 @@ CommandDispatcher::Result CommandDispatcher::handle(const MkdirCommand &cmd)
     return {this->tree->mkdir(cmd.path) ? Status::Ok : Status::Failed};
 }
 
+CommandDispatcher::Result CommandDispatcher::handle(const MvCommand &cmd)
+{
+    return {this->tree->mv(cmd.src, cmd.dst) ? Status::Ok : Status::Failed};
+}
+
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
     return {Status::Exit};
