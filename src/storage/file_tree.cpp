@@ -219,6 +219,20 @@ std::optional<FileInfo> FileTree::stat(const Path &rel) const
     return info;
 }
 
+std::optional<DiskInfo> FileTree::df() const
+{
+    std::error_code                   ec;
+    const std::filesystem::space_info space = std::filesystem::space(this->root_path, ec);
+
+    if (ec)
+    {
+        Logger::error("file_tree: df %s: %s", this->root_path.c_str(), ec.message().c_str());
+        return std::nullopt;
+    }
+
+    return DiskInfo {space.capacity, space.free, space.available};
+}
+
 bool FileTree::mkdir(const Path &rel)
 {
     const std::optional<Path> path = this->resolve(rel);

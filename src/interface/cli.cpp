@@ -133,6 +133,22 @@ bool handle_stat(Cli &cli, Command &, const CommandDispatcher::Result &result)
     return true;
 }
 
+bool handle_df(Cli &cli, Command &, const CommandDispatcher::Result &result)
+{
+    const auto *info = std::get_if<DiskInfo>(&result.body);
+
+    if (info == nullptr)
+    {
+        return true;
+    }
+
+    cli.print("size:  %llu", static_cast<unsigned long long>(info->capacity));
+    cli.print("used:  %llu", static_cast<unsigned long long>(info->capacity - info->free));
+    cli.print("avail: %llu", static_cast<unsigned long long>(info->available));
+
+    return true;
+}
+
 struct Entry
 {
     const char *name;
@@ -152,6 +168,7 @@ constexpr Entry entries[] = {
     {"mkdir", "mkdir <dir>", "create directory", make_one_arg<MkdirCommand>, handle_none, false},
     {"mv", "mv <src> <dst>", "move or rename", make_mv, handle_none, false},
     {"rm", "rm <path>", "remove file or empty directory", make_one_arg<RmCommand>, handle_none, false},
+    {"df", "df", "show disk space", make_no_args<DfCommand>, handle_df, false},
     {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 

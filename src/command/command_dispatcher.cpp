@@ -90,6 +90,18 @@ CommandDispatcher::Result CommandDispatcher::handle(const RmCommand &cmd)
     return {this->tree->rm(cmd.path) ? Status::Ok : Status::Failed};
 }
 
+CommandDispatcher::Result CommandDispatcher::handle(const DfCommand &)
+{
+    const std::optional<DiskInfo> info = this->tree->df();
+
+    if (!info)
+    {
+        return {Status::Failed};
+    }
+
+    return {Status::Ok, *info};
+}
+
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
     return {Status::Exit};

@@ -23,6 +23,13 @@ struct FileInfo
     std::chrono::system_clock::time_point mtime;
 };
 
+struct DiskInfo
+{
+    std::uint64_t capacity;
+    std::uint64_t free;
+    std::uint64_t available;
+};
+
 class FileTree
 {
 public:
@@ -40,6 +47,7 @@ public:
     std::optional<std::vector<std::string>> print() const;
     std::optional<std::vector<std::string>> list(const Path &rel) const;
     std::optional<FileInfo>                 stat(const Path &rel) const;
+    std::optional<DiskInfo>                 df() const;
 
     bool mkdir(const Path &rel);
 
