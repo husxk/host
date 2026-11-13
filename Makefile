@@ -11,4 +11,4 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 run:
-	./$(BUILD_DIR)/host
+	./$(BUILD_DIR)/server/host

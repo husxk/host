@@ -10,28 +10,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(APP_NAME host)
-
 find_path(RAPIDJSON_INCLUDE_DIR rapidjson/document.h REQUIRED)
 
-file(GLOB_RECURSE HOST_SOURCES
-    ${PROJECT_SOURCE_DIR}/src/*.cpp
-)
-
-add_executable(${APP_NAME}
-    main.cpp
-    ${HOST_SOURCES}
-)
-
-target_include_directories(${APP_NAME}
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
-        ${RAPIDJSON_INCLUDE_DIR}
-)
-
-target_compile_options(${APP_NAME}
-    PRIVATE
-        -Wall
-        -Wextra
-        -Wpedantic
-)
+add_subdirectory(server)
