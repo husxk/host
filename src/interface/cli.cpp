@@ -39,14 +39,15 @@ std::optional<Command> make_one_arg(const Args &args)
     return T {args[0]};
 }
 
-std::optional<Command> make_ls(const Args &args)
+template <typename T>
+std::optional<Command> make_optional_arg(const Args &args)
 {
     if (args.size() > 1)
     {
         return std::nullopt;
     }
 
-    return LsCommand {args.empty() ? "" : args[0]};
+    return T {args.empty() ? "" : args[0]};
 }
 
 std::optional<Command> make_write(const Args &args)
@@ -149,6 +150,20 @@ bool handle_df(Cli &cli, Command &, const CommandDispatcher::Result &result)
     return true;
 }
 
+bool handle_du(Cli &cli, Command &, const CommandDispatcher::Result &result)
+{
+    const auto *usage = std::get_if<UsageInfo>(&result.body);
+
+    if (usage == nullptr)
+    {
+        return true;
+    }
+
+    cli.print("size: %llu", static_cast<unsigned long long>(usage->size));
+
+    return true;
+}
+
 struct Entry
 {
     const char *name;
@@ -161,7 +176,7 @@ struct Entry
 
 constexpr Entry entries[] = {
     {"print", "print", "print the file tree", make_no_args<PrintCommand>, handle_strings, false},
-    {"ls", "ls [dir]", "list directory contents", make_ls, handle_strings, false},
+    {"ls", "ls [dir]", "list directory contents", make_optional_arg<LsCommand>, handle_strings, false},
     {"show", "show <file>", "print file contents", make_one_arg<ShowCommand>, handle_show, false},
     {"write", "write <file> [text]", "append text to file", make_write, handle_none, true},
     {"stat", "stat <path>", "show file info", make_one_arg<StatCommand>, handle_stat, false},
@@ -169,6 +184,7 @@ constexpr Entry entries[] = {
     {"mv", "mv <src> <dst>", "move or rename", make_mv, handle_none, false},
     {"rm", "rm <path>", "remove file or empty directory", make_one_arg<RmCommand>, handle_none, false},
     {"df", "df", "show disk space", make_no_args<DfCommand>, handle_df, false},
+    {"du", "du [path]", "show disk usage", make_optional_arg<DuCommand>, handle_du, false},
     {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 

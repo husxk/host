@@ -30,6 +30,11 @@ struct DiskInfo
     std::uint64_t available;
 };
 
+struct UsageInfo
+{
+    std::uint64_t size;
+};
+
 class FileTree
 {
 public:
@@ -48,6 +53,7 @@ public:
     std::optional<std::vector<std::string>> list(const Path &rel) const;
     std::optional<FileInfo>                 stat(const Path &rel) const;
     std::optional<DiskInfo>                 df() const;
+    std::optional<UsageInfo>                du(const Path &rel) const;
 
     bool mkdir(const Path &rel);
 

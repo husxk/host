@@ -51,6 +51,11 @@ struct DfCommand
 {
 };
 
+struct DuCommand
+{
+    std::string path;
+};
+
 struct ExitCommand
 {
 };
@@ -64,4 +69,5 @@ using Command = std::variant<PrintCommand,
                              MvCommand,
                              RmCommand,
                              DfCommand,
+                             DuCommand,
                              ExitCommand>;

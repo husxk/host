@@ -233,6 +233,71 @@ std::optional<DiskInfo> FileTree::df() const
     return DiskInfo {space.capacity, space.free, space.available};
 }
 
+std::optional<UsageInfo> FileTree::du(const Path &rel) const
+{
+    const std::optional<Path> path = this->resolve(rel);
+
+    if (!path)
+    {
+        return std::nullopt;
+    }
+
+    std::error_code                    ec;
+    const std::filesystem::file_status status = std::filesystem::status(*path, ec);
+
+    if (std::filesystem::is_regular_file(status))
+    {
+        const std::uint64_t size = std::filesystem::file_size(*path, ec);
+
+        if (ec)
+        {
+            Logger::error("file_tree: du %s: %s", path->c_str(), ec.message().c_str());
+            return std::nullopt;
+        }
+
+        return UsageInfo {size};
+    }
+
+    if (!std::filesystem::is_directory(status))
+    {
+        return std::nullopt;
+    }
+
+    UsageInfo                                           usage {0};
+    std::filesystem::recursive_directory_iterator       it(*path, ec);
+    const std::filesystem::recursive_directory_iterator end;
+
+    for (; !ec && it != end; it.increment(ec))
+    {
+        const std::filesystem::file_status entry = it->symlink_status(ec);
+
+        if (ec)
+        {
+            break;
+        }
+
+        if (!std::filesystem::is_regular_file(entry))
+        {
+            continue;
+        }
+
+        usage.size += it->file_size(ec);
+
+        if (ec)
+        {
+            break;
+        }
+    }
+
+    if (ec)
+    {
+        Logger::error("file_tree: du %s: %s", path->c_str(), ec.message().c_str());
+        return std::nullopt;
+    }
+
+    return usage;
+}
+
 bool FileTree::mkdir(const Path &rel)
 {
     const std::optional<Path> path = this->resolve(rel);

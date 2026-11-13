@@ -21,7 +21,7 @@ public:
 
     using Strings = std::vector<std::string>;
     using RawData = std::vector<char>;
-    using Body    = std::variant<std::monostate, Strings, RawData, FileInfo, DiskInfo>;
+    using Body    = std::variant<std::monostate, Strings, RawData, FileInfo, DiskInfo, UsageInfo>;
 
     struct Result
     {
@@ -44,6 +44,7 @@ private:
     Result handle(const MvCommand &cmd);
     Result handle(const RmCommand &cmd);
     Result handle(const DfCommand &cmd);
+    Result handle(const DuCommand &cmd);
     Result handle(const ExitCommand &cmd);
 
     std::shared_ptr<FileTree> tree;

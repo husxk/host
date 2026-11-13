@@ -102,6 +102,18 @@ CommandDispatcher::Result CommandDispatcher::handle(const DfCommand &)
     return {Status::Ok, *info};
 }
 
+CommandDispatcher::Result CommandDispatcher::handle(const DuCommand &cmd)
+{
+    const std::optional<UsageInfo> usage = this->tree->du(cmd.path);
+
+    if (!usage)
+    {
+        return {Status::Failed};
+    }
+
+    return {Status::Ok, *usage};
+}
+
 CommandDispatcher::Result CommandDispatcher::handle(const ExitCommand &)
 {
     return {Status::Exit};
