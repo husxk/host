@@ -278,6 +278,27 @@ bool FileTree::mv(const Path &src, const Path &dst)
     return true;
 }
 
+bool FileTree::rm(const Path &rel)
+{
+    const std::optional<Path> path = this->resolve_entry(rel);
+
+    if (!path)
+    {
+        return false;
+    }
+
+    std::error_code ec;
+    const bool      removed = std::filesystem::remove(*path, ec);
+
+    if (ec)
+    {
+        Logger::error("file_tree: rm %s: %s", path->c_str(), ec.message().c_str());
+        return false;
+    }
+
+    return removed;
+}
+
 std::optional<std::vector<std::string>> FileTree::list(const Path &rel) const
 {
     const std::optional<std::vector<Entry>> found = this->entries(rel);

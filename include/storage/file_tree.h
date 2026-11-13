@@ -46,6 +46,8 @@ public:
     // TODO: dst can appear between the exists check and rename; use renameat2(RENAME_NOREPLACE) on Linux?
     bool mv(const Path &src, const Path &dst);
 
+    bool rm(const Path &rel);
+
     // TODO: cache open fds instead of reopening the file on every read.
     ReadResult read(const Path &rel, std::uint64_t offset, char *buf, std::size_t max);
 

@@ -42,6 +42,11 @@ struct MvCommand
     std::string dst;
 };
 
+struct RmCommand
+{
+    std::string path;
+};
+
 struct ExitCommand
 {
 };
@@ -53,4 +58,5 @@ using Command = std::variant<PrintCommand,
                              StatCommand,
                              MkdirCommand,
                              MvCommand,
+                             RmCommand,
                              ExitCommand>;

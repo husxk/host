@@ -151,6 +151,7 @@ constexpr Entry entries[] = {
     {"stat", "stat <path>", "show file info", make_one_arg<StatCommand>, handle_stat, false},
     {"mkdir", "mkdir <dir>", "create directory", make_one_arg<MkdirCommand>, handle_none, false},
     {"mv", "mv <src> <dst>", "move or rename", make_mv, handle_none, false},
+    {"rm", "rm <path>", "remove file or empty directory", make_one_arg<RmCommand>, handle_none, false},
     {"exit", "exit", "quit", make_no_args<ExitCommand>, handle_none, false},
 };
 
