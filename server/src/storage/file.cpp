@@ -1,5 +1,6 @@
 #include "storage/file.h"
 
+#include <system_error>
 #include <utility>
 
 #include "logger.h"
@@ -12,6 +13,15 @@ File::File(Path path, std::fstream stream)
 
 std::optional<File> File::open(const Path &path, Mode mode)
 {
+    std::error_code                    ec;
+    const std::filesystem::file_status status = std::filesystem::status(path, ec);
+
+    if (std::filesystem::exists(status) && !std::filesystem::is_regular_file(status))
+    {
+        Logger::error("file: open %s: not a regular file", path.c_str());
+        return std::nullopt;
+    }
+
     std::ios::openmode flags = std::ios::binary | std::ios::in;
 
     if (mode == Mode::Append)
