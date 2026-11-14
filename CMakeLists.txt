@@ -12,4 +12,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_path(RAPIDJSON_INCLUDE_DIR rapidjson/document.h REQUIRED)
 
+option(HOST_BUILD_TESTS "Build tests" ON)
+
+if(HOST_BUILD_TESTS)
+    enable_testing()
+endif()
+
 add_subdirectory(server)
