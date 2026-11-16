@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -39,6 +40,15 @@ protected:
         EXPECT_TRUE(stream) << "make_file " << file;
 
         return file;
+    }
+
+    std::string read_file(const std::string &name) const
+    {
+        std::ifstream stream(this->path(name), std::ios::binary);
+
+        EXPECT_TRUE(stream) << "read_file " << this->path(name);
+
+        return std::string(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
     }
 
     std::filesystem::path dir;
