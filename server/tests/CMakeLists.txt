@@ -11,6 +11,11 @@ add_executable(${TESTS_NAME}
     ${TEST_SOURCES}
 )
 
+target_include_directories(${TESTS_NAME}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 target_link_libraries(${TESTS_NAME}
     PRIVATE
         host_core
