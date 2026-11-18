@@ -13,6 +13,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 find_path(RAPIDJSON_INCLUDE_DIR rapidjson/document.h REQUIRED)
 
 option(HOST_BUILD_TESTS "Build tests" ON)
+option(HOST_COVERAGE "Build with coverage instrumentation" OFF)
+
+if(HOST_COVERAGE)
+    add_compile_options(--coverage -O0 -g)
+    add_link_options(--coverage)
+endif()
 
 if(HOST_BUILD_TESTS)
     enable_testing()
