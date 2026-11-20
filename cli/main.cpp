@@ -1,6 +1,8 @@
 #include <cstdio>
+#include <optional>
 
 #include "client_config.h"
+#include "local_client.h"
 #include "logger.h"
 
 int main()
@@ -14,6 +16,13 @@ int main()
     ClientConfig config;
 
     if (!config.load("./cli.json"))
+    {
+        return 1;
+    }
+
+    std::optional<LocalClient> client = LocalClient::connect(config.get_socket_path());
+
+    if (!client)
     {
         return 1;
     }
