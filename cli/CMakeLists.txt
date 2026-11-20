@@ -1,12 +1,20 @@
 set(CLI_APP_NAME host-cli)
 
-add_executable(${CLI_APP_NAME}
-    main.cpp
+file(GLOB_RECURSE CLI_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
 )
 
-target_compile_options(${CLI_APP_NAME}
+add_executable(${CLI_APP_NAME}
+    main.cpp
+    ${CLI_SOURCES}
+)
+
+target_include_directories(${CLI_APP_NAME}
     PRIVATE
-        -Wall
-        -Wextra
-        -Wpedantic
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(${CLI_APP_NAME}
+    PRIVATE
+        host_common
 )
