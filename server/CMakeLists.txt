@@ -12,7 +12,11 @@ add_library(${CORE_NAME} STATIC
 target_include_directories(${CORE_NAME}
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${RAPIDJSON_INCLUDE_DIR}
+)
+
+target_link_libraries(${CORE_NAME}
+    PUBLIC
+        host_common
 )
 
 target_compile_options(${CORE_NAME}

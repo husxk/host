@@ -23,5 +23,5 @@ coverage:
 	find $(COVERAGE_DIR) -name '*.gcda' -delete
 	ctest --test-dir $(COVERAGE_DIR) --output-on-failure
 	mkdir -p $(COVERAGE_DIR)/coverage
-	gcovr -r . --filter server/src/ --filter server/include/ \
+	gcovr -r . --filter server/src/ --filter server/include/ --filter common/ \
 		--txt --html-details $(COVERAGE_DIR)/coverage/index.html $(COVERAGE_DIR)

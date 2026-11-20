@@ -24,5 +24,6 @@ if(HOST_BUILD_TESTS)
     enable_testing()
 endif()
 
+add_subdirectory(common)
 add_subdirectory(server)
 add_subdirectory(cli)
