@@ -25,3 +25,4 @@ if(HOST_BUILD_TESTS)
 endif()
 
 add_subdirectory(server)
+add_subdirectory(cli)
