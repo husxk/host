@@ -5,6 +5,7 @@
 #include <system_error>
 #include <utility>
 
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
@@ -138,6 +139,23 @@ LocalSession::~LocalSession()
     }
 }
 
+bool LocalSession::wait(int timeout_ms)
+{
+    pollfd pfd {};
+
+    pfd.fd     = this->connected() ? this->client_fd : this->listen_fd;
+    pfd.events = POLLIN;
+
+    const int ready = ::poll(&pfd, 1, timeout_ms);
+
+    if (ready < 0 && errno != EINTR)
+    {
+        Logger::error("local_session: poll: %s", std::strerror(errno));
+    }
+
+    return ready > 0;
+}
+
 bool LocalSession::accept()
 {
     if (this->connected())
@@ -158,6 +176,26 @@ bool LocalSession::accept()
     }
 
     this->client_fd = fd;
+
+    Logger::info("local_session: client connected");
+
+    return true;
+}
+
+bool LocalSession::wait_and_accept()
+{
+    if (this->connected())
+    {
+        return false;
+    }
+
+    while (!this->accept())
+    {
+        if (!this->wait(-1))
+        {
+            return false;
+        }
+    }
 
     return true;
 }

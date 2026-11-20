@@ -21,8 +21,17 @@ bool Config::load(const std::string &path)
         return false;
     }
 
+    if (!doc.get_string(Config::socket_path_key, this->socket_path))
+    {
+        Logger::error("config: %s: missing or invalid \"%s\"",
+                      path.c_str(),
+                      Config::socket_path_key);
+        return false;
+    }
+
     Logger::info("config: loaded %s", path.c_str());
     Logger::info("config: root fs path = %s", this->root_path.c_str());
+    Logger::info("config: socket path = %s", this->socket_path.c_str());
 
     return true;
 }
@@ -30,4 +39,9 @@ bool Config::load(const std::string &path)
 const std::string &Config::get_root_path() const
 {
     return this->root_path;
+}
+
+const std::string &Config::get_socket_path() const
+{
+    return this->socket_path;
 }

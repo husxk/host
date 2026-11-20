@@ -1,3 +1,4 @@
 {
-    "root_path": "build"
+    "root_path": "build",
+    "socket_path": "build/host.sock"
 }

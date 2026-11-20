@@ -16,7 +16,9 @@ public:
     LocalSession &operator=(LocalSession &&)      = delete;
     ~LocalSession();
 
+    bool wait(int timeout_ms);
     bool accept();
+    bool wait_and_accept();
     void disconnect();
     bool connected() const;
 
